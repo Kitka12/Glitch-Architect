@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GLITCH_ARCHITECT // FULL_ENGINE_v1.5.4</title>
+    <style>
+        :root {
+            --neon-green: #00ff66;
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff0055;
+            --neon-yellow: #ffff00;
+            --dark-bg: #05050b;
+            --panel-bg: rgba(13, 13, 25, 0.92);
+            --border-color: #1f1f3d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            font-family: 'Courier New', Courier, monospace;
+            color: #ffffff;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), 
+                        linear-gradient(90deg, rgba(255, 0, 0, 0.05), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.05));
+            background-size: 100% 4px, 6px 100%;
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0.8;
+        }
+
+        #game-container {
+            position: relative;
+            display: flex;
+            width: 1200px;
+            height: 700px;
+            background: #080811;
+            border: 3px solid var(--border-color);
+            box-shadow: 0 0 40px rgba(0, 240, 255, 0.2);
+        }
+
+        canvas {
+            background: #020205;
+            flex-grow: 1;
+            display: block;
+        }
+
+        #inspector-panel {
+            width: 320px;
+            background: var(--panel-bg);
+            border-left: 3px solid var(--border-color);
+            padding: 25px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 22px;
+            z-index: 10;
+            backdrop-filter: blur(10px);
+            overflow-y: auto;
+        }
+
+        .panel-header {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--neon-blue);
+            border-bottom: 2px dashed var(--border-color);
+            padding-bottom: 12px;
+            text-shadow: 0 0 10px rgba(0, 240, 255, 0.4);
+            letter-spacing: 1px;
+        }
+
+        .property-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        label {
+            font-size: 11px;
+            color: #8a8ab0;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: bold;
+        }
+
+        .value-display {
+            float: right;
+            color: var(--neon-green);
+            font-weight: bold;
+            font-family: monospace;
+            text-shadow: 0 0 5px rgba(0, 255, 102, 0.3);
+        }
+
+        .disabled-label {
+            color: var(--neon-pink) !important;
+            text-shadow: 0 0 5px rgba(255, 0, 85, 0.4);
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            width: 100%;
+            background: #161630;
+            height: 8px;
+            border-radius: 4px;
+            outline: none;
+            border: 1px solid #2a2a52;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            background: var(--neon-green);
+            border-radius: 50%;
+            cursor: pointer;
+            box-shadow: 0 0 10px var(--neon-green);
+            transition: transform 0.1s;
+        }
+
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        input[type="range"]:disabled::-webkit-slider-thumb {
+            background: #3a3a52 !important;
+            box-shadow: none !important;
+            cursor: not-allowed;
+            transform: none !important;
+        }
+
+        select {
+            background: #161630;
+            color: #fff;
+            border: 1px solid #2a2a52;
+            padding: 10px;
+            font-family: inherit;
+            font-size: 13px;
+            outline: none;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: border-color 0.2s;
+        }
+
+        select:focus {
+            border-color: var(--neon-blue);
+        }
+
+        #no-selection-msg {
+            color: #52527a;
+            font-style: italic;
+            text-align: center;
+            margin-top: auto;
+            margin-bottom: auto;
+            font-size: 13px;
+            line-height: 1.8;
+            border: 1px dashed #1f1f3d;
+            padding: 20px;
+            background: rgba(0,0,0,0.2);
+        }
+
+        #glitch-controls {
+            display: none;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .overlay {
+            position: absolute;
+            top: 0; left: 0; width: 880px; height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: rgba(3, 3, 7, 0.95);
+            z-index: 100;
+            transition: opacity 0.4s ease;
+        }
+
+        .overlay h1 {
+            font-size: 46px;
+            color: var(--neon-pink);
+            margin-bottom: 25px;
+            text-shadow: 0 0 20px var(--neon-pink);
+            letter-spacing: 5px;
+            text-align: center;
+        }
+
+        .overlay p {
+            font-size: 14px;
+            color: #9898be;
+            margin-bottom: 40px;
+            text-align: center;
+            max-width: 600px;
+            line-height: 1.8;
+        }
+
+        button {
+            background: rgba(0, 255, 102, 0.05);
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 14px 35px;
+            font-family: inherit;
+            font-size: 14px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 0 12px rgba(0, 255, 102, 0.15);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            letter-spacing: 1px;
+        }
+
+        button:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 25px var(--neon-green);
+        }
+
+        #ui-layer {
+            position: absolute;
+            top: 20px; left: 20px;
+            pointer-events: auto;
+            z-index: 50;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        #hud {
+            font-size: 14px;
+            color: var(--neon-blue);
+            text-shadow: 0 0 6px rgba(0,240,255,0.4);
+            font-weight: bold;
+            background: rgba(5,5,15,0.6);
+            padding: 6px 12px;
+            border-left: 3px solid var(--neon-blue);
+        }
+
+        #doublejump-hud {
+            font-size: 11px;
+            color: #8a8ab0;
+            background: rgba(0, 240, 255, 0.04);
+            padding: 6px 10px;
+            border: 1px solid rgba(0, 240, 255, 0.15);
+            display: none;
+            width: max-content;
+            font-weight: bold;
+        }
+
+        .btn-restart {
+            padding: 10px 18px;
+            font-size: 12px;
+            border-color: var(--neon-pink);
+            color: var(--neon-pink);
+            background: rgba(255, 0, 85, 0.05);
+            box-shadow: 0 0 10px rgba(255, 0, 85, 0.15);
+        }
+
+        .btn-restart:hover {
+            background: var(--neon-pink);
+            color: #fff;
+            box-shadow: 0 0 22px var(--neon-pink);
+        }
+
+        #game-version-tag {
+            position: absolute;
+            bottom: 15px; left: 710px;
+            font-size: 11px;
+            color: #38385c;
+            font-weight: bold;
+            letter-spacing: 1px;
+            pointer-events: none;
+            z-index: 50;
+        }
+
+        #hacker-terminal {
+            position: absolute;
+            top: 0; left: 0; width: 880px; height: 100%;
+            background: rgba(2, 2, 5, 0.98);
+            z-index: 200;
+            padding: 35px;
+            display: none;
+            flex-direction: column;
+            font-family: 'Courier New', Courier, monospace;
+            border-right: 1px solid #1f1f3d;
+        }
+
+        #terminal-close-btn {
+            position: absolute;
+            top: 25px; right: 25px;
+            background: transparent;
+            border: 1px solid var(--neon-pink);
+            color: var(--neon-pink);
+            padding: 6px 14px;
+            font-size: 12px;
+            cursor: pointer;
+            box-shadow: 0 0 6px rgba(255, 0, 85, 0.1);
+        }
+
+        #terminal-close-btn:hover {
+            background: var(--neon-pink);
+            color: #fff;
+            box-shadow: 0 0 15px var(--neon-pink);
+        }
+
+        #terminal-history {
+            flex-grow: 1;
+            overflow-y: auto;
+            color: #5c5c8a;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 20px;
+            padding-right: 12px;
+        }
+
+        .terminal-row {
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .terminal-input-line {
+            display: flex;
+            align-items: center;
+            color: var(--neon-blue);
+            font-size: 16px;
+            font-weight: bold;
+            border-top: 1px solid #1a1a36;
+            padding-top: 20px;
+        }
+
+        #terminal-input-field {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #ffffff;
+            font-family: inherit;
+            font-size: 16px;
+            flex-grow: 1;
+            margin-left: 12px;
+            caret-color: var(--neon-blue);
+        }
+
+        /* --- CONTROLS MOBILNE --- */
+        #mobile-controls {
+            position: absolute;
+            bottom: 30px; left: 30px;
+            width: 200px; height: 130px;
+            z-index: 60;
+            display: none;
+            gap: 15px;
+        }
+
+        .mobile-btn {
+            width: 65px; height: 65px;
+            background: rgba(26, 26, 51, 0.4);
+            border: 2px solid #3a3a73;
+            color: #8a8ab0;
+            border-radius: 12px;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 24px; font-weight: bold;
+            touch-action: none;
+        }
+
+        .mobile-btn:active {
+            background: rgba(0, 240, 255, 0.15);
+            border-color: var(--neon-blue);
+            color: #ffffff;
+        }
+
+        #mobile-action-group {
+            position: absolute;
+            bottom: 30px; right: 350px;
+            z-index: 60;
+            display: none;
+        }
+
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="ui-layer">
+            <div id="hud">SYS_CORE: ONLINE // POZIOM: <span id="hud-level">1</span></div>
+            <div id="doublejump-hud">SYS_M_JUMP: <span id="dj-status" style="color: var(--neon-green)">READY</span></div>
+            <button id="btn-restart-level" class="btn-restart">RESTART_PROT.EXE</button>
+        </div>
+
+        <div id="game-version-tag">STABLE_ENGINE // PRODUCTION_BUILD_1.5.4</div>
+
+        <div id="mobile-controls">
+            <div class="mobile-btn" id="m-left">←</div>
+            <div class="mobile-btn" id="m-right">→</div>
+        </div>
+        <div id="mobile-action-group">
+            <div class="mobile-btn" id="m-jump" style="width: 75px; height: 75px; font-size: 18px; border-color: var(--neon-green); color: var(--neon-green);">SKOK</div>
+        </div>
+
+        <div id="hacker-terminal">
+            <button id="terminal-close-btn">[X] ZAMKNIJ_TERMINAL</button>
+            <div id="terminal-history">
+                <div class="terminal-row">// KERNEL REVISION 1.5.4-STABLE // SYSTEM READY FOR INPUT</div>
+                <div class="terminal-row">// KLUCZ REJESTRU: WPROWADŹ ROZKAZ LUB SKRÓT ZABEZPIECZEŃ...</div>
+            </div>
+            <div class="terminal-input-line">
+                <span>$ ARCH_ROOT></span>
+                <input type="text" id="terminal-input-field" maxlength="60" autocomplete="off" spellcheck="false">
+            </div>
+        </div>
+
+        <div id="start-screen" class="overlay">
+            <h1>GLITCH_ARCHITECT</h1>
+            <p>Witaj w środowisku testowym jądra. Manipuluj strukturami danych bloków w czasie rzeczywistym. <br>
+            Wciśnij średnik [ ; ] podczas rozgrywki, aby wywołać konsolę niskopoziomową.<br>
+            Modyfikacja architektury pobiera energię z lokalnego węzła obiektu (maksymalnie 3 edycje).</p>
+            <button id="btn-start">URUCHOM_SILNIK_PROD.EXE</button>
+        </div>
+
+        <canvas id="gameCanvas" width="880" height="700"></canvas>
+
+        <div id="inspector-panel">
+            <div class="panel-header">INSPEKTOR_WĘZŁA.sys</div>
+            
+            <div id="no-selection-msg">
+                [BRAK AKTYWNEJ SELEKCJI]<br><br>
+                Kliknij kursorem myszy na kolorowy blok strukturalny w oknie podglądu, aby otworzyć deskryptor zasobów i zmodyfikować jego pamięć podręczną.
+            </div>
+
+            <div id="glitch-controls">
+                <div style="font-size: 13px; color: var(--neon-pink); font-weight: bold; margin-bottom: 2px;">STRUCT_ID: <span id="obj-id">block_0</span></div>
+                <div style="font-size: 12px; color: var(--neon-blue); font-weight: bold; margin-bottom: 12px;">ENERGIA_WĘZŁA: <span id="obj-energy" style="color: var(--neon-green)">3/3</span></div>
+                
+                <div id="weight-warning" style="font-size: 11px; color: var(--neon-pink); font-weight: bold; display: none; text-transform: uppercase; margin-bottom: 8px;">[BLOKADA MATRYCY: WYKRYTO NACISK GRACZA]</div>
+                
+                <div class="property-group">
+                    <label id="lbl-posx">Pozycja osiowa X <span id="val-posx" class="value-display">0</span></label>
+                    <input type="range" id="param-posx" min="0" max="820" step="2" value="0">
+                </div>
+
+                <div class="property-group">
+                    <label id="lbl-posy">Pozycja osiowa Y <span id="val-posy" class="value-display">0</span></label>
+                    <input type="range" id="param-posy" min="0" max="660" step="2" value="0">
+                </div>
+
+                <div class="property-group">
+                    <label>Mnożnik grawitacji własnej <span id="val-gravity" class="value-display">1.0</span></label>
+                    <input type="range" id="param-gravity" min="-2" max="2" step="0.5" value="1">
+                </div>
+
+                <div class="property-group">
+                    <label>Skala wymiarowa pionowa <span id="val-scale" class="value-display">1.0</span></label>
+                    <input type="range" id="param-scale" min="0.2" max="3" step="0.1" value="1">
+                </div>
+
+                <div class="property-group">
+                    <label>Rejestr kolizyjny (Solid) <span id="val-collision" class="value-display">ON</span></label>
+                    <select id="param-collision">
+                        <option value="solid">STAŁY MATERIAŁ (Solid)</option>
+                        <option value="ghost">PRZENIKALNA PROJEKCJA (Ghost)</option>
+                    </select>
+                </div>
+
+                <div class="property-group">
+                    <label>Sygnatura fizyki rdzenia <span id="val-state" class="value-display">STATIC</span></label>
+                    <select id="param-state">
+                        <option value="static">ZAKOTWICZONY (Static)</option>
+                        <option value="dynamic">DYNAMICZNA MASA (Dynamic)</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- PEŁNY MODUŁ AUDIO GENERATYWNEGO (Web Audio API) ---
+        const AudioFX = {
+            ctx: null,
+            init() { 
+                try { 
+                    this.ctx = new (window.AudioContext || window.webkitAudioContext)(); 
+                } catch(e) { console.error("Audio Context Init Error", e); } 
+            },
+            playJump() {
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.type = 'square';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(380, this.ctx.currentTime + 0.08);
+                gain.gain.setValueAtTime(0.02, this.ctx.currentTime); 
+                gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.08);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.08);
+            },
+            playDoubleJump() {
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.type = 'triangle';
+                osc.frequency.setValueAtTime(280, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(700, this.ctx.currentTime + 0.14);
+                gain.gain.setValueAtTime(0.03, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.14);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.14);
+            },
+            playSelect() {
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.type = 'sine';
+                osc.frequency.setValueAtTime(580, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.015, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.05);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.05);
+            },
+            playGlitch() {
+                if (!this.ctx) return;
+                let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                osc.connect(gain); gain.connect(this.ctx.destination); osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(Math.random() * 120 + 50, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.025, this.ctx.currentTime);
+                gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + 0.09);
+                osc.start(); osc.stop(this.ctx.currentTime + 0.09);
+            },
+            playWin() {
+                if (!this.ctx) return;
+                let notes = [523.25, 587.33, 659.25, 783.99, 1046.50];
+                notes.forEach((f, i) => {
+                    let osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+                    osc.connect(gain); gain.connect(this.ctx.destination); osc.type = 'triangle';
+                    this.ctx.currentTime + i * 0.06;
+                    gain.gain.setValueAtTime(0.025, this.ctx.currentTime + i * 0.06);
+                    gain.gain.linearRampToValueAtTime(0.001, this.ctx.currentTime + i * 0.06 + 0.15);
+                    osc.start(this.ctx.currentTime + i * 0.06); osc.stop(this.ctx.currentTime + i * 0.06 + 0.15);
+                });
+            }
+        };
+
+        // --- SYSTEM CZĄSTECZEK GRAFICZNYCH ---
+        class ParticleSystem {
+            constructor() { this.particles = []; }
+            spawn(x, y, color, count = 5, speed = 2.5) {
+                for (let i = 0; i < count; i++) {
+                    this.particles.push({
+                        x: x, y: y,
+                        vx: (Math.random() - 0.5) * speed,
+                        vy: (Math.random() - 0.5) * speed,
+                        size: Math.random() * 3.5 + 1,
+                        color: color,
+                        alpha: 1,
+                        life: Math.random() * 25 + 20
+                    });
+                }
+            }
+            update() {
+                for (let i = this.particles.length - 1; i >= 0; i--) {
+                    let p = this.particles[i];
+                    p.x += p.vx; p.y += p.vy; p.life--;
+                    p.alpha = p.life / 45;
+                    if (p.life <= 0) this.particles.splice(i, 1);
+                }
+            }
+            draw(ctx) {
+                ctx.save();
+                this.particles.forEach(p => {
+                    ctx.globalAlpha = p.alpha;
+                    ctx.fillStyle = p.color;
+                    ctx.fillRect(p.x, p.y, p.size, p.size);
+                });
+                ctx.restore();
+            }
+        }
+
+        // --- SILNIK FIZYKI GRACZA ---
+        class Player {
+            constructor(x, y) {
+                this.spawnX = x; this.spawnY = y;
+                this.x = x; this.y = y;
+                this.width = 22; this.height = 34;
+                this.vx = 0; this.vy = 0;
+                this.speed = 4.0;
+                this.gravity = 0.36;
+                this.jumpForce = -9.0;
+                this.grounded = false;
+                this.color = '#00f0ff';
+                this.standingOnBlock = null;
+
+                // Moduł dodatkowego skoku
+                this.doubleJumpUnlocked = false;
+                this.doubleJumpsLeft = 0;
+                this.doubleJumpCooldown = 0;
+            }
+            reset() {
+                this.x = this.spawnX; this.y = this.spawnY;
+                this.vx = 0; this.vy = 0;
+                this.grounded = false;
+                this.standingOnBlock = null;
+                if(this.doubleJumpUnlocked) {
+                    this.doubleJumpCooldown = 0;
+                    this.doubleJumpsLeft = 1;
+                }
+            }
+            update(keys, platforms, keysPressedThisFrame) {
+                if (game.isTerminalOpen) return;
+
+                let currentSpeed = this.speed;
+                let currentFriction = 0.76;
+
+                // Modyfikacja fizyki zależna od podłoża specjalnego
+                if (this.standingOnBlock) {
+                    if (this.standingOnBlock.specialType === 'ice') {
+                        currentFriction = 0.985; // Ślizganie się na lodzie
+                    }
+                    if (this.standingOnBlock.specialType === 'conveyor') {
+                        this.vx += this.standingOnBlock.conveyorDir * 0.45; // Przenoszenie przez taśmociąg
+                    }
+                }
+
+                // Obsługa kierunkowa
+                if (keys['a'] || keys['arrowleft'] || game.mobileKeys['left']) {
+                    this.vx -= currentSpeed * 0.24;
+                } else if (keys['d'] || keys['arrowright'] || game.mobileKeys['right']) {
+                    this.vx += currentSpeed * 0.24;
+                } else {
+                    this.vx *= currentFriction;
+                }
+
+                let maxVx = currentSpeed * 1.6;
+                if (Math.abs(this.vx) > maxVx) this.vx = maxVx * Math.sign(this.vx);
+
+                // Grawitacja globalna
+                this.vy += this.gravity * game.globalGravityDirection;
+                if (Math.abs(this.vy) > 13) this.vy = 13 * Math.sign(this.vy);
+
+                // Odliczanie czasu przeładowania podwójnego skoku
+                if (this.doubleJumpUnlocked && this.doubleJumpCooldown > 0) {
+                    this.doubleJumpCooldown--;
+                    if(this.doubleJumpCooldown <= 0) {
+                        this.doubleJumpsLeft = 1;
+                        AudioFX.playSelect();
+                    }
+                }
+
+                // Logika skakania
+                if (keysPressedThisFrame['w'] || keysPressedThisFrame['arrowup'] || keysPressedThisFrame[' '] || game.mobileKeys['jump']) {
+                    if (this.grounded) {
+                        this.vy = this.jumpForce * game.globalGravityDirection;
+                        this.grounded = false;
+                        this.standingOnBlock = null;
+                        AudioFX.playJump();
+                        game.particles.spawn(this.x + this.width / 2, this.y + (game.globalGravityDirection > 0 ? this.height : 0), this.color, 6, 2);
+                    } 
+                    else if (this.doubleJumpUnlocked && this.doubleJumpsLeft > 0 && this.doubleJumpCooldown <= 0) {
+                        this.vy = this.jumpForce * 0.94 * game.globalGravityDirection;
+                        this.doubleJumpsLeft = 0;
+                        this.doubleJumpCooldown = 900; // 15 sekund
+                        AudioFX.playDoubleJump();
+                        game.particles.spawn(this.x + this.width / 2, this.y + this.height / 2, '#ff00ff', 14, 4);
+                    }
+                }
+
+                // Aplikacja wektorów z pętlą kolizyjną osiową
+                this.x += this.vx; 
+                this.handleCollision(platforms, 'x');
+                
+                this.y += this.vy; 
+                this.grounded = false; 
+                this.standingOnBlock = null; 
+                this.handleCollision(platforms, 'y');
+
+                // Detekcja wypadnięcia poza ramy ekranu testowego
+                if (this.y > game.canvas.height + 120 || this.y < -120) {
+                    this.reset();
+                    AudioFX.playGlitch();
+                }
+            }
+
+            handleCollision(platforms, axis) {
+                platforms.forEach(p => {
+                    if (p.collisionType === 'ghost') return;
+
+                    if (this.x < p.x + p.width && this.x + this.width > p.x &&
+                        this.y < p.y + p.height && this.y + this.height > p.y) {
+                        
+                        if (axis === 'x') {
+                            if (this.vx > 0) this.x = p.x - this.width;
+                            if (this.vx < 0) this.x = p.x + p.width;
+                            this.vx = 0;
+                        } else if (axis === 'y') {
+                            if (game.globalGravityDirection > 0) { // Normalna grawitacja
+                                if (this.vy > 0) {
+                                    this.y = p.y - this.height; 
+                                    this.vy = 0; 
+                                    this.grounded = true; 
+                                    this.standingOnBlock = p;
+                                    this.triggerSpecialBlockEffects(p);
+                                } else if (this.vy < 0) {
+                                    this.y = p.y + p.height; 
+                                    this.vy = 0;
+                                }
+                            } else { // Odwrócona grawitacja
+                                if (this.vy < 0) {
+                                    this.y = p.y + p.height; 
+                                    this.vy = 0; 
+                                    this.grounded = true; 
+                                    this.standingOnBlock = p;
+                                    this.triggerSpecialBlockEffects(p);
+                                } else if (this.vy > 0) {
+                                    this.y = p.y - this.height; 
+                                    this.vy = 0;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+
+            triggerSpecialBlockEffects(block) {
+                // TRAMPOLINA: Wymuszona relokacja pionowa pod strukturę bloku
+                if (block.specialType === 'trampoline') {
+                    game.particles.spawn(this.x + this.width / 2, this.y + this.height / 2, '#ffff00', 16, 3);
+                    
+                    if (game.globalGravityDirection > 0) {
+                        this.y = block.y + block.height + 5; 
+                    } else {
+                        this.y = block.y - this.height - 5; 
+                    }
+                    
+                    this.vy = game.globalGravityDirection * 2.5; 
+                    this.grounded = false;
+                    this.standingOnBlock = null;
+                    AudioFX.playGlitch();
+                    game.particles.spawn(this.x + this.width / 2, this.y, '#ffff00', 12, 2.5);
+                }
+
+                // BLOK ZAŁAMUJĄCY SIĘ (Crumble)
+                if (block.specialType === 'crumble' && !block.crumbleTriggered) {
+                    block.crumbleTriggered = true;
+                    AudioFX.playGlitch();
+                }
+            }
+
+            draw(ctx) {
+                ctx.save();
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 12;
+                ctx.shadowColor = this.color;
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                
+                // Wizualizacja oczu
+                ctx.fillStyle = '#ffffff';
+                let eyeOffset = this.vx >= 0 ? 12 : 4;
+                ctx.fillRect(this.x + eyeOffset, this.y + (game.globalGravityDirection > 0 ? 8 : 22), 6, 4);
+                ctx.restore();
+            }
+        }
+
+        // --- MATRYCA KLASOWA BLOKÓW ARCHITEKTURY ---
+        class ArchBlock {
+            constructor(id, x, y, width, height, color = '#3d3d7a', editable = true, specialType = 'normal') {
+                this.id = id;
+                this.x = x;
+                this.y = y;
+                this.baseHeight = height;
+                this.width = width;
+                this.height = height;
+                this.color = color;
+                this.editable = editable;
+                this.gravityScale = 1.0;
+                this.sizeScale = 1.0;
+                this.collisionType = 'solid';
+                this.physicsState = 'static';
+                this.vy = 0;
+                this.energy = 3; 
+                this.hasChangedThisDrag = false;
+
+                // Moduły wariacyjne (typ platformy)
+                this.specialType = specialType; 
+                this.conveyorDir = Math.random() > 0.5 ? 1 : -1;
+                this.animOffset = 0;
+                this.crumbleTriggered = false;
+                this.crumbleTimer = 90; 
+                this.respawnTimer = 0;
+            }
+
+            update() {
+                if (game.isTerminalOpen) return;
+
+                if (this.specialType === 'conveyor') {
+                    this.animOffset += 1.6 * this.conveyorDir;
+                }
+
+                if (this.specialType === 'crumble') {
+                    if (this.crumbleTriggered && this.collisionType !== 'ghost') {
+                        this.crumbleTimer--;
+                        if (this.crumbleTimer <= 0) {
+                            this.collisionType = 'ghost';
+                            this.respawnTimer = 240; 
+                            AudioFX.playGlitch();
+                            game.particles.spawn(this.x + this.width / 2, this.y + this.height / 2, '#ff0055', 25, 3.5);
+                        }
+                    }
+                    if (this.collisionType === 'ghost' && this.respawnTimer > 0) {
+                        this.respawnTimer--;
+                        if (this.respawnTimer <= 0) {
+                            this.collisionType = 'solid';
+                            this.crumbleTriggered = false;
+                            this.crumbleTimer = 90;
+                            game.particles.spawn(this.x + this.width / 2, this.y + this.height / 2, '#ffaa00', 12, 2);
+                        }
+                    }
+                }
+
+                let targetHeight = this.baseHeight * this.sizeScale;
+                if (this.height !== targetHeight) this.height = targetHeight;
+
+                if (this.physicsState === 'dynamic') {
+                    this.vy += 0.22 * this.gravityScale * game.globalGravityDirection;
+                    if (Math.abs(this.vy) > 9) this.vy = 9 * Math.sign(this.vy);
+                    this.y += this.vy;
+
+                    if (this.y + this.height > game.canvas.height - 20 && game.globalGravityDirection >= 0) {
+                        this.y = game.canvas.height - 20 - this.height;
+                        this.vy = 0;
+                    }
+                } else {
+                    this.vy = 0;
+                }
+            }
+
+            draw(ctx, isSelected) {
+                ctx.save();
+                
+                if (this.collisionType === 'ghost') {
+                    ctx.globalAlpha = 0.16;
+                    ctx.setLineDash([5, 5]);
+                    ctx.strokeStyle = this.color;
+                    ctx.strokeRect(this.x, this.y, this.width, this.height);
+                    if (this.specialType === 'crumble' && this.respawnTimer > 0) {
+                        ctx.restore();
+                        return;
+                    }
+                }
+
+                ctx.fillStyle = this.energy <= 0 && this.editable ? '#1e1e2a' : '#101021';
+                ctx.fillRect(this.x, this.y, this.width, this.height);
+                ctx.clip(ctx.rect(this.x, this.y, this.width, this.height));
+
+                if (this.specialType === 'normal') {
+                    ctx.strokeStyle = this.color; ctx.lineWidth = 0.5; ctx.globalAlpha = 0.35;
+                    for (let lx = this.x; lx < this.x + this.width; lx += 15) {
+                        ctx.beginPath(); ctx.moveTo(lx, this.y); ctx.lineTo(lx, this.y + this.height); ctx.stroke();
+                    }
+                } 
+                else if (this.specialType === 'conveyor') {
+                    ctx.strokeStyle = '#00ff66'; ctx.lineWidth = 3; ctx.globalAlpha = 0.75;
+                    let step = 22;
+                    let startX = this.x + (this.animOffset % step) - step;
+                    for (let lx = startX; lx < this.x + this.width + step; lx += step) {
+                        ctx.beginPath();
+                        ctx.moveTo(lx, this.y); 
+                        ctx.lineTo(lx + 8, this.y + this.height / 2); 
+                        ctx.lineTo(lx, this.y + this.height);
+                        ctx.stroke();
+                    }
+                } 
+                else if (this.specialType === 'ice') {
+                    ctx.strokeStyle = '#00f0ff'; ctx.lineWidth = 2; ctx.globalAlpha = 0.65;
+                    for (let lx = this.x + 6; lx < this.x + this.width; lx += 14) {
+                        ctx.beginPath(); ctx.moveTo(lx, this.y); 
+                        ctx.lineTo(lx, this.y + (lx % 4 === 0 ? this.height : this.height * 0.55)); 
+                        ctx.stroke();
+                    }
+                } 
+                else if (this.specialType === 'trampoline') {
+                    ctx.strokeStyle = '#ffff00'; ctx.lineWidth = 2; ctx.globalAlpha = 0.7;
+                    let pulse = Math.sin(Date.now() / 130) * 4;
+                    for (let lx = this.x + 14; lx < this.x + this.width; lx += 24) {
+                        ctx.beginPath();
+                        ctx.moveTo(lx, this.y + 6 + pulse); 
+                        ctx.lineTo(lx + 6, this.y + 15 + pulse); 
+                        ctx.lineTo(lx + 12, this.y + 6 + pulse);
+                        ctx.stroke();
+                    }
+                } 
+                else if (this.specialType === 'crumble') {
+                    ctx.strokeStyle = this.crumbleTriggered && Math.floor(Date.now() / 90) % 2 === 0 ? '#ff0055' : '#ffaa00';
+                    ctx.lineWidth = 5; ctx.globalAlpha = 0.8;
+                    for (let lx = this.x - this.height; lx < this.x + this.width; lx += 18) {
+                        ctx.beginPath(); ctx.moveTo(lx, this.y); ctx.lineTo(lx + this.height, this.y + this.height); ctx.stroke();
+                    }
+                }
+
+                ctx.restore();
+
+                ctx.save();
+                ctx.strokeStyle = this.editable ? this.color : '#28283d';
+                ctx.lineWidth = 1.8;
+                ctx.strokeRect(this.x, this.y, this.width, this.height);
+
+                if(this.editable && this.energy > 0) {
+                    ctx.fillStyle = '#00ff66';
+                    for(let i = 0; i < this.energy; i++) {
+                        ctx.fillRect(this.x + 6 + (i * 9), this.y + 6, 4, 4);
+                    }
+                }
+
+                if (isSelected) {
+                    ctx.globalAlpha = 1.0;
+                    ctx.strokeStyle = '#00ff66';
+                    ctx.lineWidth = 2;
+                    ctx.strokeRect(this.x - 3, this.y - 3, this.width + 6, this.height + 6);
+                }
+                ctx.restore();
+            }
+        }
+
+        // --- GŁÓWNY KONTROLER MODUŁU GRY ---
+        const game = {
+            canvas: null, ctx: null,
+            isRunning: false, isTerminalOpen: false,
+            level: 1, player: null, blocks: [],
+            portal: { x: 0, y: 0, radius: 24, angle: 0 },
+            selectedBlock: null,
+            keys: {}, keysPressedThisFrame: {},
+            mobileKeys: { left: false, right: false, jump: false },
+            particles: null,
+            globalGravityDirection: 1,
+
+            init() {
+                this.canvas = document.getElementById('gameCanvas');
+                this.ctx = this.canvas.getContext('2d');
+                this.particles = new ParticleSystem();
+                this.player = new Player(50, 500);
+
+                this.detectMobileDevice();
+                this.setupEvents();
+                this.loadLevel(1);
+                this.animate();
+            },
+
+            detectMobileDevice() {
+                if ('ontouchstart' in window || navigator.maxTouchPoints > 0) {
+                    document.getElementById('mobile-controls').style.display = 'flex';
+                    document.getElementById('mobile-action-group').style.display = 'block';
+                }
+            },
+
+            setupEvents() {
+                window.addEventListener('keydown', e => {
+                    if (e.key === ';') {
+                        if (this.isRunning) this.openTerminal();
+                        e.preventDefault();
+                        return;
+                    }
+
+                    if (this.isTerminalOpen) {
+                        if (e.key === 'Enter') this.processTerminalCommand();
+                        return;
+                    }
+
+                    const key = e.key.toLowerCase();
+                    if([" ", "arrowup", "arrowdown"].includes(e.key)) e.preventDefault();
+                    if (!this.keys[key]) this.keysPressedThisFrame[key] = true;
+                    this.keys[key] = true;
+                });
+
+                window.addEventListener('keyup', e => {
+                    this.keys[e.key.toLowerCase()] = false;
+                });
+
+                const bindMobileBtn = (id, keyName) => {
+                    let el = document.getElementById(id);
+                    el.addEventListener('touchstart', (e) => { e.preventDefault(); this.mobileKeys[keyName] = true; });
+                    el.addEventListener('touchend', (e) => { e.preventDefault(); this.mobileKeys[keyName] = false; });
+                };
+                bindMobileBtn('m-left', 'left');
+                bindMobileBtn('m-right', 'right');
+                
+                document.getElementById('m-jump').addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    this.mobileKeys['jump'] = true;
+                });
+                document.getElementById('m-jump').addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    this.mobileKeys['jump'] = false;
+                });
+
+                document.getElementById('terminal-close-btn').addEventListener('click', () => this.closeTerminal());
+                document.getElementById('btn-start').addEventListener('click', () => {
+                    AudioFX.init();
+                    this.isRunning = true;
+                    document.getElementById('start-screen').classList.add('hidden');
+                });
+                document.getElementById('btn-restart-level').addEventListener('click', () => {
+                    if(this.isRunning && !this.isTerminalOpen) {
+                        AudioFX.playGlitch();
+                        this.loadLevel(this.level);
+                    }
+                });
+
+                this.canvas.addEventListener('mousedown', e => {
+                    if (!this.isRunning || this.isTerminalOpen) return;
+                    const rect = this.canvas.getBoundingClientRect();
+                    const mouseX = e.clientX - rect.left;
+                    const mouseY = e.clientY - rect.top;
+
+                    let found = false;
+                    for (let block of this.blocks) {
+                        if (mouseX >= block.x && mouseX <= block.x + block.width &&
+                            mouseY >= block.y && mouseY <= block.y + block.height) {
+                            if (block.editable) {
+                                if(block.energy > 0) {
+                                    this.selectBlock(block);
+                                    found = true;
+                                } else {
+                                    this.triggerMsg("[WĘZEŁ WYCZERPANY]", "Zabezpieczenia zablokowały zapis. Wykorzystano dopuszczalny limit 3 modyfikacji strukturalnych.");
+                                    found = true;
+                                }
+                            } else {
+                                this.triggerMsg("[ZASÓB CHRONIONY]", "Modyfikacja bazy głównej poziomu jest zabroniona przez administratora jądra.");
+                                found = true;
+                            }
+                            break;
+                        }
+                    }
+                    if (!found) this.deselectBlock();
+                });
+
+                const consumeEnergy = () => {
+                    if (this.selectedBlock && this.selectedBlock.hasChangedThisDrag) {
+                        this.selectedBlock.energy--;
+                        this.selectedBlock.hasChangedThisDrag = false;
+                        AudioFX.playGlitch();
+                        document.getElementById('obj-energy').innerText = this.selectedBlock.energy + "/3";
+                        if(this.selectedBlock.energy <= 0) {
+                            this.triggerMsg("[KOD ZAMROŻONY]", "Węzeł pamięci podręcznej bloku został trwale utrwalony w kompilatorze.");
+                            this.deselectBlock();
+                        }
+                    }
+                };
+
+                document.getElementById('param-posx').addEventListener('change', consumeEnergy);
+                document.getElementById('param-posy').addEventListener('change', consumeEnergy);
+
+                document.getElementById('param-posx').addEventListener('input', e => {
+                    if (this.selectedBlock && !this.isPlayerStandingOnSelected() && this.selectedBlock.energy > 0) {
+                        this.selectedBlock.x = parseInt(e.target.value);
+                        this.selectedBlock.hasChangedThisDrag = true;
+                        document.getElementById('val-posx').innerText = e.target.value + "px";
+                    }
+                });
+                document.getElementById('param-posy').addEventListener('input', e => {
+                    if (this.selectedBlock && !this.isPlayerStandingOnSelected() && this.selectedBlock.energy > 0) {
+                        this.selectedBlock.y = parseInt(e.target.value);
+                        this.selectedBlock.hasChangedThisDrag = true;
+                        document.getElementById('val-posy').innerText = e.target.value + "px";
+                    }
+                });
+                document.getElementById('param-gravity').addEventListener('input', e => {
+                    if (this.selectedBlock && this.selectedBlock.energy > 0) {
+                        this.selectedBlock.gravityScale = parseFloat(e.target.value);
+                        this.selectedBlock.energy--;
+                        document.getElementById('val-gravity').innerText = e.target.value;
+                        this.updateInspectorSliders();
+                    }
+                });
+                document.getElementById('param-scale').addEventListener('input', e => {
+                    if (this.selectedBlock && this.selectedBlock.energy > 0) {
+                        this.selectedBlock.sizeScale = parseFloat(e.target.value);
+                        this.selectedBlock.energy--;
+                        document.getElementById('val-scale').innerText = e.target.value;
+                        this.updateInspectorSliders();
+                    }
+                });
+                document.getElementById('param-collision').addEventListener('change', e => {
+                    if (this.selectedBlock && this.selectedBlock.energy > 0) {
+                        this.selectedBlock.collisionType = e.target.value;
+                        this.selectedBlock.energy--;
+                        document.getElementById('val-collision').innerText = e.target.value.toUpperCase();
+                        this.updateInspectorSliders();
+                    }
+                });
+                document.getElementById('param-state').addEventListener('change', e => {
+                    if (this.selectedBlock && this.selectedBlock.energy > 0) {
+                        this.selectedBlock.physicsState = e.target.value;
+                        this.selectedBlock.energy--;
+                        document.getElementById('val-state').innerText = e.target.value.toUpperCase();
+                        this.updateInspectorSliders();
+                    }
+                });
+            },
+
+            openTerminal() {
+                this.isTerminalOpen = true;
+                this.keys = {};
+                document.getElementById('hacker-terminal').style.display = 'flex';
+                let inputField = document.getElementById('terminal-input-field');
+                inputField.value = '';
+                setTimeout(() => inputField.focus(), 25);
+                AudioFX.playGlitch();
+            },
+            closeTerminal() {
+                this.isTerminalOpen = false;
+                document.getElementById('hacker-terminal').style.display = 'none';
+                AudioFX.playSelect();
+            },
+
+            processTerminalCommand() {
+                const inputEl = document.getElementById('terminal-input-field');
+                const historyEl = document.getElementById('terminal-history');
+                const cmd = inputEl.value.trim();
+                if(cmd === '') return;
+
+                let userRow = document.createElement('div');
+                userRow.className = 'terminal-row'; userRow.style.color = '#8a8ab0';
+                userRow.innerText = `$ ARCH_ROOT> ${cmd}`;
+                historyEl.appendChild(userRow);
+
+                let responseRow = document.createElement('div');
+                responseRow.className = 'terminal-row';
+
+                if (cmd === 'AScompany2802') {
+                    if(!this.player.doubleJumpUnlocked) {
+                        this.player.doubleJumpUnlocked = true;
+                        this.player.doubleJumpsLeft = 1;
+                        this.player.doubleJumpCooldown = 0;
+                        document.getElementById('doublejump-hud').style.display = 'block';
+                        responseRow.style.color = 'var(--neon-green)';
+                        responseRow.innerText = '>> POŁĄCZENIE USTANOWIONE. MODUŁ MULTI_JUMP DOSTĘPNY.';
+                        AudioFX.playWin();
+                    } else {
+                        responseRow.style.color = '#5a5a7a';
+                        responseRow.innerText = '>> BLĄD: SYSTEM_ZAINSTALOWANY.';
+                    }
+                } 
+                else if (cmd === 'OVERCLOCK_CPU_x2.5') {
+                    this.player.speed = 7.2;
+                    this.player.jumpForce = -11.8;
+                    this.player.color = '#ffff00';
+                    responseRow.style.color = 'var(--neon-green)';
+                    responseRow.innerText = '>> NADTAKTOWANIE PROCESORA: POMYŚLNE.';
+                    AudioFX.playWin();
+                } 
+                else if (cmd === 'INIT_OVERRIDE_GRAV_ZERO') {
+                    this.globalGravityDirection = this.globalGravityDirection === 1 ? -1 : 1;
+                    responseRow.style.color = '#00f0ff';
+                    responseRow.innerText = `>> WEKTOR SYMETRII GRAVITACJI ODWRÓCONY.`;
+                    AudioFX.playGlitch();
+                } 
+                else if (cmd === 'BYPASS_SECURITY_MATRIX_BLOCKS_ALL') {
+                    this.blocks.forEach(b => { if(b.editable) b.energy = 3; });
+                    if (this.selectedBlock) this.updateInspectorSliders();
+                    responseRow.style.color = 'var(--neon-green)';
+                    responseRow.innerText = '>> RESET ENERGII BLOKÓW SFINALIZOWANY.';
+                    AudioFX.playWin();
+                } 
+                else {
+                    responseRow.style.color = 'var(--neon-pink)';
+                    responseRow.innerText = `>> BLĄD PARSOWANIA: NIEZNANA SYGNATURA.`;
+                    AudioFX.playGlitch();
+                }
+
+                historyEl.appendChild(responseRow);
+                inputEl.value = '';
+                historyEl.scrollTop = historyEl.scrollHeight;
+            },
+
+            isPlayerStandingOnSelected() { return this.player.standingOnBlock === this.selectedBlock; },
+
+            triggerMsg(title, body) {
+                AudioFX.playGlitch();
+                const msgBox = document.getElementById('no-selection-msg');
+                msgBox.style.display = 'block';
+                document.getElementById('glitch-controls').style.display = 'none';
+                msgBox.innerHTML = `<span style='color: var(--neon-pink); font-weight: bold;'>${title}</span><br><br>${body}`;
+            },
+
+            selectBlock(block) {
+                if (block.energy <= 0) return;
+                this.selectedBlock = block;
+                AudioFX.playSelect();
+                document.getElementById('no-selection-msg').style.display = 'none';
+                document.getElementById('glitch-controls').style.display = 'flex';
+                document.getElementById('obj-id').innerText = block.id;
+                this.updateInspectorSliders();
+            },
+
+            updateInspectorSliders() {
+                if (!this.selectedBlock) return;
+                let b = this.selectedBlock;
+                document.getElementById('obj-energy').innerText = b.energy + "/3";
+                document.getElementById('obj-energy').style.color = b.energy <= 1 ? '#ff0055' : '#00ff66';
+                if(b.energy <= 0) { this.deselectBlock(); return; }
+
+                document.getElementById('param-posx').value = b.x;
+                document.getElementById('val-posx').innerText = b.x + "px";
+                document.getElementById('param-posy').value = b.y;
+                document.getElementById('val-posy').innerText = b.y + "px";
+                document.getElementById('param-gravity').value = b.gravityScale;
+                document.getElementById('val-gravity').innerText = b.gravityScale.toFixed(1);
+                document.getElementById('param-scale').value = b.sizeScale;
+                document.getElementById('val-scale').innerText = b.sizeScale.toFixed(1);
+                document.getElementById('param-collision').value = b.collisionType;
+                document.getElementById('val-collision').innerText = b.collisionType.toUpperCase();
+                document.getElementById('param-state').value = b.physicsState;
+                document.getElementById('val-state').innerText = b.physicsState.toUpperCase();
+            },
+
+            deselectBlock() {
+                this.selectedBlock = null;
+                const msgBox = document.getElementById('no-selection-msg');
+                msgBox.style.display = 'block';
+                msgBox.innerHTML = "[BRAK AKTYWNEJ SELEKCJI]<br><br>Kliknij kursorem myszy na kolorowy blok strukturalny w oknie podglądu, aby otworzyć deskryptor zasobów i zmodyfikować jego pamięć podręczną.";
+                document.getElementById('glitch-controls').style.display = 'none';
+            },
+
+            loadLevel(num) {
+                this.level = num;
+                this.deselectBlock();
+                const hudText = document.getElementById('hud-level');
+                hudText.innerText = num <= 3 ? num + " / 3" : num + " (PROCEDURALNY_KERNEL)";
+                this.blocks = [];
+                
+                let startWidth = Math.max(160 - (num * 4), 95);
+                this.blocks.push(new ArchBlock('baza_startowa', 0, 620, startWidth, 80, '#1c1c3a', false));
+
+                if (num === 1) {
+                    this.player.spawnX = 45; this.player.spawnY = 500; this.portal.x = 810; this.portal.y = 540;
+                    this.blocks.push(new ArchBlock('anomalia_alfa', 240, 330, 110, 30, '#5733ff'));
+                    this.blocks.push(new ArchBlock('anomalia_beta', 450, 470, 95, 35, '#a233ff'));
+                    this.blocks.push(new ArchBlock('baza_mety', 710, 590, 170, 110, '#1c1c3a', false));
+                } 
+                else if (num === 2) {
+                    this.player.spawnX = 45; this.player.spawnY = 500; this.portal.x = 770; this.portal.y = 175;
+                    this.blocks.push(new ArchBlock('izolator_bezpieczeństwa', 270, 420, 260, 280, '#ff0055', false));
+                    this.blocks.push(new ArchBlock('most_wirtualny_1', 230, 190, 105, 30, '#33a2ff'));
+                    this.blocks.push(new ArchBlock('pylon_wyjścia', 690, 240, 190, 460, '#1c1c3a', false));
+                } 
+                else if (num === 3) {
+                    this.player.spawnX = 45; this.player.spawnY = 500; this.portal.x = 440; this.portal.y = 125;
+                    this.blocks.push(new ArchBlock('węzeł_pośredni_a', 230, 500, 85, 30, '#00ff66'));
+                    this.blocks.push(new ArchBlock('węzeł_pośredni_b', 570, 400, 85, 30, '#00ff66'));
+                    this.blocks.push(new ArchBlock('rdzeń_mety', 370, 190, 130, 20, '#ff9900', false));
+                } 
+                else {
+                    // GENERATOR PROCEDURALNY - MAKSYMALNIE 3 BLOKI O DOWOLNYM KSZTAŁCIE (PROSTOKĄT / KWADRAT)
+                    this.player.spawnX = 35; this.player.spawnY = 500;
+                    let portalX = 730 + Math.floor(Math.random() * 90);
+                    let portalY = 160 + Math.floor(Math.random() * 290);
+                    this.portal.x = portalX; this.portal.y = portalY;
+                    
+                    let endWidth = Math.max(150 - (num * 3), 85);
+                    this.blocks.push(new ArchBlock('meta_strukturalna', portalX - 40, portalY + 65, endWidth, 510, '#2c194a', false));
+
+                    // Dokładnie 3 bloki na mapie (lub mniej jeśli wylosuje 0)
+                    let blockCount = Math.floor(Math.random() * 2) + 2;
+                    for(let i = 0; i < blockCount; i++) {
+                        let bX = 170 + (i * 170) + Math.floor(Math.random() * 40);
+                        let bY = 200 + Math.floor(Math.random() * 250);
+                        
+                        // Losowanie w pełni dowolnych kształtów (kwadraty lub prostokąty o różnych proporcjach)
+                        let bW = 40 + Math.floor(Math.random() * 110);  // Szerokość od 40 do 150px
+                        let bH = 25 + Math.floor(Math.random() * 95);   // Wysokość od 25 do 120px
+                        
+                        let rng = Math.random() * 100;
+                        let type = 'normal';
+                        let blockColor = '#5733ff';
+
+                        if (rng < 6.6) {
+                            type = 'conveyor'; blockColor = '#00ff66';    
+                        } else if (rng < 14.9) {
+                            type = 'ice'; blockColor = '#00f0ff';         
+                        } else if (rng < 18.2) {
+                            type = 'trampoline'; blockColor = '#ffff00';  
+                        } else if (rng < 24.8) {
+                            type = 'crumble'; blockColor = '#ffaa00';     
+                        } else {
+                            type = 'normal'; blockColor = '#33a2ff';       
+                        }
+
+                        this.blocks.push(new ArchBlock(`procedural_struct_${i}`, bX, bY, bW, bH, blockColor, true, type));
+                    }
+                }
+                this.player.reset();
+            },
+
+            checkPortalCollision() {
+                let pCenterX = this.player.x + this.player.width / 2;
+                let pCenterY = this.player.y + this.player.height / 2;
+                let dist = Math.hypot(pCenterX - this.portal.x, pCenterY - this.portal.y);
+
+                if (dist < this.portal.radius + 12) {
+                    AudioFX.playWin();
+                    this.particles.spawn(this.portal.x, this.portal.y, '#ff00ff', 35, 4.5);
+                    this.loadLevel(this.level + 1);
+                }
+            },
+
+            handleWeightLockLogic() {
+                const sliderX = document.getElementById('param-posx');
+                const sliderY = document.getElementById('param-posy');
+                const lblX = document.getElementById('lbl-posx');
+                const lblY = document.getElementById('lbl-posy');
+                const warning = document.getElementById('weight-warning');
+
+                if (this.selectedBlock) {
+                    if (this.isPlayerStandingOnSelected()) {
+                        sliderX.disabled = true; sliderY.disabled = true;
+                        lblX.classList.add('disabled-label'); lblY.classList.add('disabled-label');
+                        warning.style.display = 'block';
+                    } else {
+                        sliderX.disabled = false; sliderY.disabled = false;
+                        lblX.classList.remove('disabled-label'); lblY.classList.remove('disabled-label');
+                        warning.style.display = 'none';
+                    }
+                }
+            },
+
+            updateHUDDoubleJump() {
+                if(this.player.doubleJumpUnlocked) {
+                    const statusText = document.getElementById('dj-status');
+                    if (this.player.doubleJumpCooldown > 0) {
+                        let secLeft = (this.player.doubleJumpCooldown / 60).toFixed(1);
+                        statusText.innerText = `PRZEŁADOWANIE (${secLeft}s)`;
+                        statusText.style.color = 'var(--neon-pink)';
+                    } else {
+                        statusText.innerText = "GOTOWY";
+                        statusText.style.color = 'var(--neon-green)';
+                    }
+                }
+            },
+
+            update() {
+                if (!this.isRunning) return;
+                
+                if (!this.isTerminalOpen) {
+                    this.player.update(this.keys, this.blocks, this.keysPressedThisFrame);
+                    this.blocks.forEach(b => b.update());
+                    this.particles.update();
+                    this.checkPortalCollision();
+                    this.handleWeightLockLogic();
+                    this.updateHUDDoubleJump();
+                    this.portal.angle += 0.035;
+                }
+
+                this.keysPressedThisFrame = {};
+            },
+
+            draw() {
+                this.ctx.fillStyle = 'rgba(2, 2, 5, 0.26)';
+                this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
+
+                this.ctx.save();
+                this.ctx.strokeStyle = 'rgba(31, 31, 61, 0.15)';
+                let gridGap = 40;
+                for (let x = 0; x < this.canvas.width; x += gridGap) {
+                    this.ctx.beginPath(); this.ctx.moveTo(x, 0); this.ctx.lineTo(x, this.canvas.height); this.ctx.stroke();
+                }
+                for (let y = 0; y < this.canvas.height; y += gridGap) {
+                    this.ctx.beginPath(); this.ctx.moveTo(0, y); this.ctx.lineTo(this.canvas.width, y); this.ctx.stroke();
+                }
+                this.ctx.restore();
+
+                this.ctx.save();
+                this.ctx.translate(this.portal.x, this.portal.y);
+                this.ctx.rotate(this.portal.angle);
+                this.ctx.shadowBlur = 18;
+                this.ctx.shadowColor = '#ff00ff';
+                for (let i = 0; i < 3; i++) {
+                    this.ctx.strokeStyle = i % 2 === 0 ? '#ff00ff' : '#00f0ff';
+                    this.ctx.lineWidth = 3.5 - i;
+                    this.ctx.beginPath();
+                    this.ctx.arc(0, 0, this.portal.radius - (i * 5), 0, Math.PI * 1.6);
+                    this.ctx.stroke();
+                }
+                this.ctx.restore();
+
+                this.blocks.forEach(b => b.draw(this.ctx, this.selectedBlock === b));
+                this.player.draw(this.ctx);
+                this.particles.draw(this.ctx);
+
+                if (Math.random() > 0.988) {
+                    this.ctx.fillStyle = 'rgba(0, 255, 102, 0.07)';
+                    this.ctx.fillRect(0, Math.random() * this.canvas.height, this.canvas.width, Math.random() * 8);
+                }
+            },
+
+            animate() {
+                game.update();
+                game.draw();
+                requestAnimationFrame(() => game.animate());
+            }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => game.init());
+    </script>
+</body>
+</html>

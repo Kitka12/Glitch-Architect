@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GLITCH_ARCHITECT // HUB_GŁÓWNY</title>
+    <style>
+        :root {
+            --neon-green: #00ff66;
+            --neon-blue: #00f0ff;
+            --neon-pink: #ff0055;
+            --dark-bg: #05050b;
+            --panel-bg: rgba(13, 13, 25, 0.75);
+            --border-color: #1f1f3d;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Courier New', Courier, monospace;
+        }
+
+        body {
+            background-color: var(--dark-bg);
+            color: #ffffff;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: hidden;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Efekt linii skanujących CRT */
+        body::after {
+            content: " ";
+            display: block;
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.15) 50%);
+            background-size: 100% 4px;
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: var(--panel-bg);
+            border: 2px solid var(--border-color);
+            box-shadow: 0 0 50px rgba(0, 240, 255, 0.1);
+            backdrop-filter: blur(8px);
+            padding: 40px;
+            text-align: center;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 48px;
+            color: var(--neon-pink);
+            text-shadow: 0 0 20px rgba(255, 0, 85, 0.6);
+            letter-spacing: 4px;
+            margin-bottom: 10px;
+            animation: glitch-pulse 3s infinite alternate;
+        }
+
+        header .subtitle {
+            color: var(--neon-blue);
+            font-size: 14px;
+            letter-spacing: 2px;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+        }
+
+        /* Przycisk GRAJ */
+        .play-btn {
+            background: rgba(0, 255, 102, 0.05);
+            border: 2px solid var(--neon-green);
+            color: var(--neon-green);
+            padding: 20px 50px;
+            font-size: 18px;
+            font-weight: bold;
+            cursor: pointer;
+            letter-spacing: 2px;
+            text-decoration: none;
+            display: inline-block;
+            box-shadow: 0 0 15px rgba(0, 255, 102, 0.2);
+            transition: all 0.3s ease;
+            margin-bottom: 50px;
+            text-transform: uppercase;
+        }
+
+        .play-btn:hover {
+            background: var(--neon-green);
+            color: #000;
+            box-shadow: 0 0 35px var(--neon-green);
+            transform: scale(1.05);
+        }
+
+        /* Sekcja Instrukcji */
+        .instruction-section {
+            border-top: 1px dashed var(--border-color);
+            padding-top: 30px;
+            text-align: left;
+        }
+
+        .instruction-section h2 {
+            color: var(--neon-blue);
+            font-size: 20px;
+            margin-bottom: 20px;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            border-left: 4px solid var(--neon-blue);
+            padding-left: 10px;
+        }
+
+        .grid-instructions {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            color: #a0a0c0;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .card {
+            background: rgba(0, 0, 0, 0.3);
+            border: 1px solid rgba(31, 31, 61, 0.5);
+            padding: 20px;
+            border-radius: 4px;
+        }
+
+        .card h3 {
+            color: #fff;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        ul {
+            list-style-type: none;
+        }
+
+        li {
+            margin-bottom: 8px;
+            position: relative;
+            padding-left: 15px;
+        }
+
+        li::before {
+            content: ">";
+            position: absolute;
+            left: 0;
+            color: var(--neon-green);
+        }
+
+        .highlight {
+            color: var(--neon-green);
+            font-weight: bold;
+        }
+
+        .highlight-pink {
+            color: var(--neon-pink);
+            font-weight: bold;
+        }
+
+        footer {
+            margin-top: 40px;
+            font-size: 11px;
+            color: #4a4a6a;
+            letter-spacing: 1px;
+        }
+
+        @keyframes glitch-pulse {
+            0% { text-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
+            50% { text-shadow: 0 0 25px rgba(255, 0, 85, 0.9), 0 0 5px rgba(0, 240, 255, 0.5); }
+            100% { text-shadow: 0 0 15px rgba(255, 0, 85, 0.6); }
+        }
+
+        @media (max-width: 768px) {
+            .grid-instructions {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>GLITCH_ARCHITECT</h1>
+            <div class="subtitle">Protokół manipulacji architekturą jądra systemu v1.5.4</div>
+        </header>
+
+        <!-- PRZYCISK GRAJ (Zmień 'gra.html' na nazwę swojego pliku z grą) -->
+        <a href="Glitch Architect.html" class="play-btn">GRAJ)</a>
+
+        <div class="instruction-section">
+            <h2>Dziennik Operacji // Instrukcja Obsługi</h2>
+            
+            <div class="grid-instructions">
+                <!-- Karta 1: Sterowanie postacią -->
+                <div class="card">
+                    <h3>[01] KONTROLA AWATARA</h3>
+                    <ul>
+                        <li>Ruch: Klawisze <span class="highlight">A / D</span> lub <span class="highlight">Strzałki lewo/prawo</span></li>
+                        <li>Skok: Klawisz <span class="highlight">W / Spacja</span> lub <span class="highlight">Strzałka w górę</span></li>
+                        <li>Podwójny skok: Naciśnij skok w powietrzu (jeśli system <span class="highlight">SYS_M_JUMP</span> jest naładowany)</li>
+                    </ul>
+                </div>
+
+                <!-- Karta 2: Architektura i edycja -->
+                <div class="card">
+                    <h3>[02] INŻYNIERIA STRUKTURY</h3>
+                    <ul>
+                        <li><span class="highlight">Kliknij myszką</span> na kolorowy blok, aby otworzyć panel boczny Inspektora.</li>
+                        <li>Użyj suwaków w panelu, aby zmienić współrzędne osiowe <span class="highlight">X / Y</span> bloku.</li>
+                        <li>Pamiętaj: Każdy blok ma ograniczoną energię edycji (<span class="highlight-pink">maksymalnie 3 modyfikacje</span>).</li>
+                    </ul>
+                </div>
+
+                <!-- Karta 3: Rodzaje bloków -->
+                <div class="card">
+                    <h3>[03] REJESTR MATRYCY (BLOKI)</h3>
+                    <ul>
+                        <li><span style="color: #ffff00; font-weight:bold;">Żółty (Trampolina):</span> Wyrzuca awatara z dużą siłą w górę.</li>
+                        <li><span style="color: #ff0055; font-weight:bold;">Różowy (Kruchy):</span> Niestabilny. Zniknie chwilę po tym, jak na nim staniesz!</li>
+                        <li><span style="color: #00ff66; font-weight:bold;">Zielony (Taśmociąg):</span> Automatycznie przesuwa postać w wybranym kierunku.</li>
+                    </ul>
+                </div>
+
+                <!-- Karta 4: Cel gry -->
+                <div class="card">
+                    <h3>[04] DYREKTYWA MISJI</h3>
+                    <ul>
+                        <li>Twoim celem jest dotarcie do <span class="highlight-pink">różowego, świecącego portalu wyjściowego</span>.</li>
+                        <li>Jeśli nie możesz dosięgnąć portalu, przestaw klocki tak, aby stworzyć sobie ścieżkę.</li>
+                        <li>Uważaj, aby nie spaść poza dolną lub górną krawędź ekranu!</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            STABLE_BUILD_HEADER // ALL RIGHTS RESERVED 2026 // KERNEL_ACCESS: GRANTED
+        </footer>
+    </div>
+
+</body>
+</html>
