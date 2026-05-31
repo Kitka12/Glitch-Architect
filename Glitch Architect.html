@@ -1135,40 +1135,7 @@
                 let responseRow = document.createElement('div');
                 responseRow.className = 'terminal-row';
 
-                if (cmd === 'AScompany2802') {
-                    if(!this.player.doubleJumpUnlocked) {
-                        this.player.doubleJumpUnlocked = true;
-                        this.player.doubleJumpsLeft = 1;
-                        this.player.doubleJumpCooldown = 0;
-                        document.getElementById('doublejump-hud').style.display = 'block';
-                        responseRow.style.color = 'var(--neon-green)';
-                        responseRow.innerText = '>> POŁĄCZENIE USTANOWIONE. MODUŁ MULTI_JUMP DOSTĘPNY.';
-                        AudioFX.playWin();
-                    } else {
-                        responseRow.style.color = '#5a5a7a';
-                        responseRow.innerText = '>> BLĄD: SYSTEM_ZAINSTALOWANY.';
-                    }
-                } 
-                else if (cmd === 'OVERCLOCK_CPU_x2.5') {
-                    this.player.speed = 7.2;
-                    this.player.jumpForce = -11.8;
-                    this.player.color = '#ffff00';
-                    responseRow.style.color = 'var(--neon-green)';
-                    responseRow.innerText = '>> NADTAKTOWANIE PROCESORA: POMYŚLNE.';
-                    AudioFX.playWin();
-                } 
-                else if (cmd === 'INIT_OVERRIDE_GRAV_ZERO') {
-                    this.globalGravityDirection = this.globalGravityDirection === 1 ? -1 : 1;
-                    responseRow.style.color = '#00f0ff';
-                    responseRow.innerText = `>> WEKTOR SYMETRII GRAVITACJI ODWRÓCONY.`;
-                    AudioFX.playGlitch();
-                } 
-                else if (cmd === 'BYPASS_SECURITY_MATRIX_BLOCKS_ALL') {
-                    this.blocks.forEach(b => { if(b.editable) b.energy = 3; });
-                    if (this.selectedBlock) this.updateInspectorSliders();
-                    responseRow.style.color = 'var(--neon-green)';
-                    responseRow.innerText = '>> RESET ENERGII BLOKÓW SFINALIZOWANY.';
-                    AudioFX.playWin();
+              
                 } 
                 else {
                     responseRow.style.color = 'var(--neon-pink)';
