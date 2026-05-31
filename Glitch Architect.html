@@ -1135,7 +1135,20 @@
                 let responseRow = document.createElement('div');
                 responseRow.className = 'terminal-row';
 
-              
+                                if (cmd === 'AScompany2802') {
+                    if(!this.player.doubleJumpUnlocked) {
+                        this.player.doubleJumpUnlocked = true;
+                        this.player.doubleJumpsLeft = 1;
+                        this.player.doubleJumpCooldown = 0;
+                        document.getElementById('doublejump-hud').style.display = 'block';
+                        responseRow.style.color = 'var(--neon-green)';
+                        responseRow.innerText = '>> POŁĄCZENIE USTANOWIONE. MODUŁ MULTI_JUMP DOSTĘPNY.';
+                        AudioFX.playWin();
+                    } else {
+                        responseRow.style.color = '#5a5a7a';
+                        responseRow.innerText = '>> BLĄD: SYSTEM_ZAINSTALOWANY.';
+                    }	
+				
                 } 
                 else {
                     responseRow.style.color = 'var(--neon-pink)';
