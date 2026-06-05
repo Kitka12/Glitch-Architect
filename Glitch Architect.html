@@ -1214,7 +1214,7 @@
                 this.level = num;
                 this.deselectBlock();
                 const hudText = document.getElementById('hud-level');
-                hudText.innerText = num <= 3 ? num + " / 3" : num + " (PROCEDURALNY_KERNEL)";
+                hudText.innerText = num <= 3 ? num + " / ?" : num + " (PROCEDURALNY_KERNEL)";
                 this.blocks = [];
                 
                 let startWidth = Math.max(160 - (num * 4), 95);
